@@ -1,9 +1,9 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, reactive } from 'vue'
 
 // 食物列表
 const foodList = ref
-const meatListData = [
+const meatListData = reactive([
   { food: "牛肉片", time: "60" },
   { food: "羊肉片", time: "60" },
   { food: "鸡肉片", time: "90" },
@@ -28,8 +28,8 @@ const meatListData = [
   { food: "鸭肠", time: "15" },
   { food: "鸡翅中", time: "300" },
   { food: "无骨鸭掌", time: "300" }
-]
-const seafoodListData = [
+])
+const seafoodListData = reactive([
   { food: "虾", time: "120" },
   { food: "蟹腿", time: "180" },
   { food: "鱼丸", time: "120" },
@@ -39,25 +39,62 @@ const seafoodListData = [
   { food: "龙利鱼", time: "90" },
   { food: "鲜虾", time: "120" },
   { food: "蛎子", time: "180" }
-]
-const vegetableListData = [
+])
+const vegetableListData = reactive([
   { food: "蘑菇", time: "180" },
   { food: "黄豆芽", time: "60" },
   { food: "白菜", time: "60" },
   { food: "沙拉菜", time: "60" },
   { food: "笋", time: "60" }
-]
-const beanListData = [
+])
+const beanListData = reactive([
   { food: "豆腐", time: "60" },
   { food: "家乡老豆腐", time: "60" },
   { food: "黄豆金腐", time: "60" },
   { food: "竹豆油皮", time: "60" }
-]
-const mainfoodListData = []
+])
+const mainfoodListData = reactive([])
 
-const fungiListData = []
+const fungiListData = reactive([])
 
-const waitList = [1, 2, 3,1, 2, 3,1, 2, 3,1, 2, 3,1, 2, 3]
+const waitList = reactive([])
+
+
+const deleteWaitList = (item) => {
+  waitList.pop(item)
+  console.log('-1')
+
+}
+
+const addWaitList = (item) => {
+  // 克隆 item 对象
+  const newItem = { ...item, id: waitList.length + 1 };
+  waitList.push(newItem)
+  // 倒计时
+  countdown(newItem);
+}
+
+const countdown = (item) => {
+  // 延时器
+  const timer = setInterval(() => {
+    item.time--
+    console.log(item.food, item.time);
+
+    if (item.time <= 0) {
+      clearInterval(timer); // 如果时间为零或负数，清除定时器
+    }
+  }, 1000);
+}
+
+// 获取当前时间
+const getNowTime = () => {
+  const now = new Date();
+  const minute = now.getMinutes();
+  const second = now.getSeconds();
+  const format_minute = minute < 10 ? '0' + minute : minute
+  const format_second = second < 10 ? '0' + second : second
+  return `${format_minute}m:${format_second}s`;
+}
 </script>
 
 <template>
@@ -67,32 +104,38 @@ const waitList = [1, 2, 3,1, 2, 3,1, 2, 3,1, 2, 3,1, 2, 3]
     <div class="content_container">
       <div class="content">
         <h2 class="sort">肉类：</h2>
-        <div class="food" v-for="(item, index) in meatListData" :key="index">{{ item.food }}</div>
+        <div class="food" v-for="(item, index) in meatListData" :key="index" @click="addWaitList(item)">{{ item.food }}
+        </div>
       </div>
 
       <div class="content">
         <h2 class="sort">河海鲜：</h2>
-        <div class="food" v-for="(item, index) in seafoodListData" :key="index">{{ item.food }}</div>
+        <div class="food" v-for="(item, index) in seafoodListData" :key="index" @click="addWaitList(item)">{{ item.food }}
+        </div>
       </div>
 
       <div class="content">
         <h2 class="sort">蔬菜：</h2>
-        <div class="food" v-for="(item, index) in vegetableListData" :key="index">{{ item.food }}</div>
+        <div class="food" v-for="(item, index) in vegetableListData" :key="index" @click="addWaitList(item)">{{ item.food
+        }}</div>
       </div>
 
       <div class="content">
         <h2 class="sort">豆制类：</h2>
-        <div class="food" v-for="(item, index) in beanListData" :key="index">{{ item.food }}</div>
+        <div class="food" v-for="(item, index) in beanListData" :key="index" @click="addWaitList(item)">{{ item.food }}
+        </div>
       </div>
 
       <div class="content">
         <h2 class="sort">主食：</h2>
-        <div class="food" v-for="(item, index) in mainfoodListData" :key="index">{{ item.food }}</div>
+        <div class="food" v-for="(item, index) in mainfoodListData" :key="index" @click="addWaitList(item)">{{ item.food
+        }}</div>
       </div>
 
       <div class="content">
         <h2 class="sort">菌类：</h2>
-        <div class="food" v-for="(item, index) in fungiListData" :key="index">{{ item.food }}</div>
+        <div class="food" v-for="(item, index) in fungiListData" :key="index" @click="addWaitList(item)">{{ item.food }}
+        </div>
       </div>
     </div>
 
@@ -100,8 +143,8 @@ const waitList = [1, 2, 3,1, 2, 3,1, 2, 3,1, 2, 3,1, 2, 3]
     <div class="title">计时表</div>
     <div class="show">
       <div class="show_item" v-for="(item, index) in waitList" :key="index">
-        <p>1.虾滑(16:18下锅):30秒后可吃!</p>
-        <button>删除</button>
+        <p>{{ item.id }}.{{ item.food }}({{ getNowTime() }}下锅):{{ item.time }}s后可吃!</p>
+        <button @click="deleteWaitList(item)">删除</button>
       </div>
     </div>
 
@@ -118,7 +161,7 @@ const waitList = [1, 2, 3,1, 2, 3,1, 2, 3,1, 2, 3,1, 2, 3]
   box-sizing: border-box;
 }
 
-.content_container{
+.content_container {
   height: 600px;
   overflow: auto;
 }
