@@ -1,9 +1,10 @@
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 
 // 食物列表
 const foodList = ref
-const meatListData = reactive([
+// const timeOut = ref(true)
+const meatListData = ([
   { food: "牛肉片", time: "60" },
   { food: "羊肉片", time: "60" },
   { food: "鸡肉片", time: "90" },
@@ -29,7 +30,7 @@ const meatListData = reactive([
   { food: "鸡翅中", time: "300" },
   { food: "无骨鸭掌", time: "300" }
 ])
-const seafoodListData = reactive([
+const seafoodListData = ([
   { food: "虾", time: "120" },
   { food: "蟹腿", time: "180" },
   { food: "鱼丸", time: "120" },
@@ -40,35 +41,48 @@ const seafoodListData = reactive([
   { food: "鲜虾", time: "120" },
   { food: "蛎子", time: "180" }
 ])
-const vegetableListData = reactive([
+const vegetableListData = ([
   { food: "蘑菇", time: "180" },
   { food: "黄豆芽", time: "60" },
   { food: "白菜", time: "60" },
   { food: "沙拉菜", time: "60" },
   { food: "笋", time: "60" }
 ])
-const beanListData = reactive([
+const beanListData = ([
   { food: "豆腐", time: "60" },
   { food: "家乡老豆腐", time: "60" },
   { food: "黄豆金腐", time: "60" },
   { food: "竹豆油皮", time: "60" }
 ])
-const mainfoodListData = reactive([])
+const mainfoodListData = ([{ food: "火锅面", time: "300" }, { food: "方便面", time: "180" }, { food: "红薯粉", time: "180" }, { food: "宽粉", time: "180" }, { food: "粉丝", time: "180" }, { food: "手擀面", time: "300" }, { food: "面筋", time: "300" }, { food: "饺子", time: "300" }])
 
-const fungiListData = reactive([])
+const fungiListData = ([{ food: "金针菇", time: "180" }, { food: "平菇", time: "180" }, { food: "松茸", time: "180" }, { food: "鸡腿菇", time: "180" }, { food: "木耳", time: "180" }, { food: "香菇", time: "180" }, { food: "杏鲍菇", time: "180" }, { food: "杨枝菇", time: "180" }, { food: "云耳", time: "180" }, { food: "松蘑", time: "180" }])
 
 const waitList = reactive([])
 
 
-const deleteWaitList = (item) => {
-  waitList.pop(item)
-  console.log('-1')
-
+// 获取当前时间
+const getNowTime = () => {
+  const now = new Date();
+  const hour = now.getHours();
+  const minute = now.getMinutes();
+  const second = now.getSeconds();
+  const format_hour = hour < 10 ? '0' + hour : hour
+  const format_minute = minute < 10 ? '0' + minute : minute
+  const format_second = second < 10 ? '0' + second : second
+  return `${format_hour}时:${format_minute}分:${format_second}秒`;
 }
 
+const deleteWaitList = (item) => {
+  const index = waitList.indexOf(item)
+  waitList.splice(index, 1)
+}
+
+
 const addWaitList = (item) => {
-  // 克隆 item 对象
-  const newItem = { ...item, id: waitList.length + 1 };
+  const nowTime = getNowTime()
+  // 克隆 item 对象插入id，nowtime, status字段,并使对象变成响应式
+  const newItem = ref({ ...item, id: waitList.length + 1, nowTime: nowTime, status: true })
   waitList.push(newItem)
   // 倒计时
   countdown(newItem);
@@ -76,25 +90,26 @@ const addWaitList = (item) => {
 
 const countdown = (item) => {
   // 延时器
-  const timer = setInterval(() => {
-    item.time--
-    console.log(item.food, item.time);
+  // console.log(item.value.status);
 
-    if (item.time <= 0) {
+  const timer = setInterval(() => {
+    item.value.time--
+    // console.log(item.value.food, item.value.time);
+
+    if (item.value.time <= 0) {
       clearInterval(timer); // 如果时间为零或负数，清除定时器
+      item.value.status = false
+      console.log(item);
+      // 先删除数组该项再用unshift添加到数组第一项
+      const index = waitList.indexOf(item)
+      waitList.splice(index, 1)
+      waitList.unshift(item)
     }
   }, 1000);
 }
 
-// 获取当前时间
-const getNowTime = () => {
-  const now = new Date();
-  const minute = now.getMinutes();
-  const second = now.getSeconds();
-  const format_minute = minute < 10 ? '0' + minute : minute
-  const format_second = second < 10 ? '0' + second : second
-  return `${format_minute}m:${format_second}s`;
-}
+
+
 </script>
 
 <template>
@@ -143,8 +158,12 @@ const getNowTime = () => {
     <div class="title">计时表</div>
     <div class="show">
       <div class="show_item" v-for="(item, index) in waitList" :key="index">
-        <p>{{ item.id }}.{{ item.food }}({{ getNowTime() }}下锅):{{ item.time }}s后可吃!</p>
-        <button @click="deleteWaitList(item)">删除</button>
+        <div :style="item.value.status ? '' : 'color:rgb(87, 171, 87)'">
+          <div style="font-weight: 900;">{{ index + 1}}.{{ item.value.food }}</div>({{ item.value.nowTime }}下锅):<div
+            style="display:inline-block; font-weight: 900;">{{ item.value.status ? item.value.time : '' }}</div>
+          {{ item.value.status ? "秒后可吃!" : "可以吃啦~" }}
+        </div>
+        <button :style="item.value.status ? '' : 'color:rgb(87, 171, 87)'" @click="deleteWaitList(item)">x</button>
       </div>
     </div>
 
@@ -206,14 +225,17 @@ const getNowTime = () => {
   color: #812228;
   font-size: 22px;
   font-weight: 900;
+  margin: 5px 0 10px 0;
 }
 
 .show {
   display: flex;
   flex: 1;
   justify-content: space-between;
+  align-content: flex-start;
   flex-wrap: wrap;
-  min-height: 200px;
+  width: 90%;
+  min-height: 300px;
   /* 设置最小高度 */
   background-color: #ffffff;
   color: #af6f73;
@@ -229,7 +251,25 @@ const getNowTime = () => {
 .show_item {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   width: 100%;
+  height: auto;
+}
+
+.show_item p {
+  width: 90%;
+  font-size: 14px;
+}
+
+.show_item button {
+  border: none;
+  background-color: transparent;
+  /* 去除背景颜色 */
+  padding: 0;
+  /* 取消内边距 */
+  cursor: pointer;
+  /* 可选：鼠标指针样式 */
+  color: #af6f73;
+  font-size: 14px;
 }
 </style>
