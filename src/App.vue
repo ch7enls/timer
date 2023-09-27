@@ -3,6 +3,13 @@ import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 
 // 食物列表
 const foodList = ref
+const makeFood = ref('');
+const makeTime = ref('');
+const isShowText = ref(true)
+const isShowTips = ref(true)
+const scrollY = ref(0)
+const isModalVisible = ref(false);
+
 // const timeOut = ref(true)
 const meatListData = ([
   { food: "牛肉片", time: "60" },
@@ -58,7 +65,28 @@ const mainfoodListData = ([{ food: "火锅面", time: "300" }, { food: "方便�
 
 const fungiListData = ([{ food: "金针菇", time: "180" }, { food: "平菇", time: "180" }, { food: "松茸", time: "180" }, { food: "鸡腿菇", time: "180" }, { food: "木耳", time: "180" }, { food: "香菇", time: "180" }, { food: "杏鲍菇", time: "180" }, { food: "杨枝菇", time: "180" }, { food: "云耳", time: "180" }, { food: "松蘑", time: "180" }])
 
+const customList = reactive([])
+
+const recordList = reactive([])
+
 const waitList = reactive([])
+
+
+// 监听鼠标下滑事件，下滑超过150px
+const onScroll = (event) => {
+  const timer = setInterval(() => {
+    scrollY.value = event.target.scrollTop;
+    if (scrollY.value > 500) {
+      isShowText.value = false
+      console.log('监听鼠标下滑事件，下滑超过150px', scrollY.value);
+    }
+    else if (scrollY.value < 300) {
+      isShowText.value = true
+      console.log('监听鼠标下滑事件，下滑小于150px', scrollY.value);
+    }
+    clearInterval(timer);
+  }, 300);
+}
 
 
 // 获取当前时间
@@ -71,21 +99,6 @@ const getNowTime = () => {
   const format_minute = minute < 10 ? '0' + minute : minute
   const format_second = second < 10 ? '0' + second : second
   return `${format_hour}时:${format_minute}分:${format_second}秒`;
-}
-
-const deleteWaitList = (item) => {
-  const index = waitList.indexOf(item)
-  waitList.splice(index, 1)
-}
-
-
-const addWaitList = (item) => {
-  const nowTime = getNowTime()
-  // 克隆 item 对象插入id，nowtime, status字段,并使对象变成响应式
-  const newItem = ref({ ...item, id: waitList.length + 1, nowTime: nowTime, status: true })
-  waitList.push(newItem)
-  // 倒计时
-  countdown(newItem);
 }
 
 const countdown = (item) => {
@@ -108,58 +121,160 @@ const countdown = (item) => {
   }, 1000);
 }
 
+const deleteWaitList = (item) => {
+  const index = waitList.indexOf(item)
+  waitList.splice(index, 1)
+  if (waitList.length == 0) {
+    isShowTips.value = true
+    // console.log('false', isShowTips.value, waitList.length);
+  } else {
+    isShowTips.value = false
+    // console.log('true', isShowTips.value,waitList.length);
+  }
+}
 
+const addWaitList = (item) => {
+  if (waitList.length >= 0) {
+    isShowTips.value = false
+    console.log('true', isShowTips.value, waitList.length);
+  } else {
+    isShowTips.value = true
+    console.log('false', isShowTips.value, waitList.length);
+  }
+  const nowTime = getNowTime()
+  // 克隆 item 对象插入id，nowtime, status字段,并使对象变成响应式
+  const newItem = ref({ ...item, id: waitList.length + 1, nowTime: nowTime, status: true })
+  waitList.push(newItem)
+  recordList.push(newItem)
+  // 倒计时
+  countdown(newItem);
+}
+
+// 提交历史食材
+const recordWaitList = (item) => {
+  const nowTime = getNowTime()
+  // 克隆 item 对象插入id，nowtime, status字段,并使对象变成响应式
+  const newItem = ref({ ...item, id: waitList.length + 1, nowTime: nowTime, status: true })
+  waitList.push(newItem)
+  console.log(waitList[0].value.status);
+
+  // 倒计时
+  countdown(newItem);
+}
+
+const showModal = () => {
+  isModalVisible.value = true;
+};
+
+const closeModal = () => {
+  isModalVisible.value = false;
+};
+
+// 提交自定义食材
+const submitFood = (item) => {
+  if (makeFood.value && makeTime.value) {
+    // event.preventDefault();
+    const nowTime = getNowTime()
+    const newItem = ref({ id: customList.length + 1, food: makeFood.value, time: makeTime.value, nowTime: nowTime, status: true })
+    console.log(item);
+
+    waitList.push(newItem)
+    recordList.push(newItem)
+    // 倒计时
+    countdown(newItem);
+    makeFood.value = '';
+    makeTime.value = '';
+  } else {
+    // alert('请输入食材名称和时间')
+    showModal();
+    console.log('请输入食材名称和时间');
+  }
+}
+
+// 数据持久化
 
 </script>
 
 <template>
   <div class="container">
-    <h1>涮火锅计时器</h1>
-
-    <div class="content_container">
+    <h1>涮(shuan)火锅计时器🍲</h1>
+    <p style="color: #c4c4c4;">{{ isShowText ? '--------------------下滑查看更多食品--------------------' : '扎布多德勒😋' }}</p>
+    <div class="content_container" @scroll="onScroll">
       <div class="content">
         <h2 class="sort">肉类：</h2>
-        <div class="food" v-for="(item, index) in meatListData" :key="index" @click="addWaitList(item)">{{ item.food }}
+        <div class="food" v-for="(item, index) in meatListData" :key="index" @click="addWaitList(item)">{{ item.food }}:{{
+          item.time }}s
         </div>
       </div>
 
       <div class="content">
         <h2 class="sort">河海鲜：</h2>
-        <div class="food" v-for="(item, index) in seafoodListData" :key="index" @click="addWaitList(item)">{{ item.food }}
+        <div class="food" v-for="(item, index) in seafoodListData" :key="index" @click="addWaitList(item)">{{ item.food
+        }}:{{ item.time }}s
         </div>
       </div>
 
       <div class="content">
         <h2 class="sort">蔬菜：</h2>
         <div class="food" v-for="(item, index) in vegetableListData" :key="index" @click="addWaitList(item)">{{ item.food
-        }}</div>
+        }}:{{ item.time }}s</div>
       </div>
 
       <div class="content">
         <h2 class="sort">豆制类：</h2>
-        <div class="food" v-for="(item, index) in beanListData" :key="index" @click="addWaitList(item)">{{ item.food }}
+        <div class="food" v-for="(item, index) in beanListData" :key="index" @click="addWaitList(item)">{{ item.food }}:{{
+          item.time }}s
         </div>
       </div>
 
       <div class="content">
         <h2 class="sort">主食：</h2>
         <div class="food" v-for="(item, index) in mainfoodListData" :key="index" @click="addWaitList(item)">{{ item.food
-        }}</div>
+        }}:{{ item.time }}s</div>
       </div>
 
       <div class="content">
         <h2 class="sort">菌类：</h2>
-        <div class="food" v-for="(item, index) in fungiListData" :key="index" @click="addWaitList(item)">{{ item.food }}
+        <div class="food" v-for="(item, index) in fungiListData" :key="index" @click="addWaitList(item)">{{ item.food
+        }}:{{ item.time }}s
+        </div>
+      </div>
+
+      <!-- <div class="content">
+        <h2 class="sort">自定义：</h2>
+        <div class="food" v-for="(item, index) in customList" :key="index" @click="addWaitList(item)">{{ item.food }}
+        </div>
+      </div> -->
+
+      <div class="content">
+        <h2 class="sort">吃了啥：</h2>
+        <div class="food" v-for="(item, index) in recordList" :key="index" @click="recordWaitList(item)">{{
+          item.value.food }}:{{ item.value.time }}s
         </div>
       </div>
     </div>
 
-
+    <P style="margin-top: 2px; color: #c4c4c4;">--------------------😋🍲🥩🥬🥔🍄🦞🐠--------------------</P>
     <div class="title">计时表</div>
-    <div class="show">
+    <div class="from">
+      <label for="food">食材:</label>
+      <input type="text" placeholder="请输入食材名称" v-model="makeFood" name="makeFood" id="">
+      <label for="time">时间:</label>
+      <input type="text" placeholder="请输入烹饪时间" v-model="makeTime" name="makeTime" id="">
+      <button type="submit" @click="submitFood(item)">开涮</button>
+    </div>
+    <!-- 模态框 -->
+    <div class="modal" v-if="isModalVisible">
+      <div class="modal-content">
+        <span class="close" @click="closeModal">&times;</span>
+        <p>🙀请输入食材名称和烹饪时间</p>
+      </div>
+    </div>
+
+    <div class="show">{{ isShowTips ? 'Tips:锅里啥都没啦，点击食材下锅吧~' : '' }}
       <div class="show_item" v-for="(item, index) in waitList" :key="index">
         <div :style="item.value.status ? '' : 'color:rgb(87, 171, 87)'">
-          <div style="font-weight: 900;">{{ index + 1}}.{{ item.value.food }}</div>({{ item.value.nowTime }}下锅):<div
+          <div style="font-weight: 900;">{{ index + 1 }}.{{ item.value.food }}</div>({{ item.value.nowTime }}下锅):<div
             style="display:inline-block; font-weight: 900;">{{ item.value.status ? item.value.time : '' }}</div>
           {{ item.value.status ? "秒后可吃!" : "可以吃啦~" }}
         </div>
@@ -196,12 +311,17 @@ const countdown = (item) => {
   justify-content: flex-start;
   align-items: center;
   align-content: center;
-  padding: 10px;
+  padding: 16px 16px 0 16px;
 }
 
 .content h2 {
   color: #812228;
 
+}
+
+.sort {
+  margin: 0 5px;
+  /* padding: 5px; */
 }
 
 .food {
@@ -225,7 +345,43 @@ const countdown = (item) => {
   color: #812228;
   font-size: 22px;
   font-weight: 900;
-  margin: 5px 0 10px 0;
+  margin: 0px 0 10px 0;
+}
+
+.from {
+  display: flex;
+  width: 100vw;
+  padding: 0 20px;
+  justify-content: center;
+  align-items: center;
+  align-content: center;
+  box-sizing: border-box;
+}
+
+.from label {
+  color: rgb(129, 34, 40);
+  font-weight: 600;
+}
+
+.from input {
+  width: 110px;
+  margin: 0 10px;
+  padding: 0 5px;
+  color: #af6f73;
+}
+
+.from input::placeholder {
+  color: #af6f73;
+}
+
+.from button {
+  width: 54px;
+  height: 24px;
+  background-color: #fef0f0;
+  color: rgb(129, 34, 40);
+  border: #af6f73 1px solid;
+  border-radius: 4px;
+  box-sizing: border-box;
 }
 
 .show {
@@ -271,5 +427,49 @@ const countdown = (item) => {
   /* 可选：鼠标指针样式 */
   color: #af6f73;
   font-size: 14px;
+}
+
+/* 模态框 */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 999;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  align-content: center;
+}
+
+/* 模态框内容 */
+.modal-content {
+  position: relative;
+  background-color: #fefefe;
+  padding: 20px;
+  border: 1px solid #888;
+  width: 80%;
+  text-align: center;
+  border-radius: 20px;
+  color: #af6f73;
+}
+
+/* 关闭按钮 */
+.close {
+  position: absolute;
+  right: 15px;
+  top: 0;
+  color: #af6f73;
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
+}
+
+.close:hover {
+  color: black;
+  cursor: pointer;
 }
 </style>
