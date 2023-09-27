@@ -76,11 +76,11 @@ const waitList = reactive([])
 const onScroll = (event) => {
   const timer = setInterval(() => {
     scrollY.value = event.target.scrollTop;
-    if (scrollY.value > 500) {
+    if (scrollY.value > 50) {
       isShowText.value = false
       console.log('监听鼠标下滑事件，下滑超过150px', scrollY.value);
     }
-    else if (scrollY.value < 300) {
+    else if (scrollY.value < 50) {
       isShowText.value = true
       console.log('监听鼠标下滑事件，下滑小于150px', scrollY.value);
     }
@@ -172,6 +172,13 @@ const closeModal = () => {
 
 // 提交自定义食材
 const submitFood = (item) => {
+  if (waitList.length >= 0) {
+    isShowTips.value = false
+    console.log('true', isShowTips.value, waitList.length);
+  } else {
+    isShowTips.value = true
+    console.log('false', isShowTips.value, waitList.length);
+  }
   if (makeFood.value && makeTime.value) {
     // event.preventDefault();
     const nowTime = getNowTime()
@@ -198,7 +205,7 @@ const submitFood = (item) => {
 <template>
   <div class="container">
     <h1>涮(shuan)火锅计时器🍲</h1>
-    <p style="color: #c4c4c4;">{{ isShowText ? '--------------------下滑查看更多食品--------------------' : '扎布多德勒😋' }}</p>
+    <p style="color: #c4c4c4;">{{ isShowText ? '------下滑查看更多食品------' : '扎布多德勒😋' }}</p>
     <div class="content_container" @scroll="onScroll">
       <div class="content">
         <h2 class="sort">肉类：</h2>
@@ -248,13 +255,13 @@ const submitFood = (item) => {
 
       <div class="content">
         <h2 class="sort">吃了啥：</h2>
-        <div class="food" v-for="(item, index) in recordList" :key="index" @click="recordWaitList(item)">{{
-          item.value.food }}:{{ item.value.time }}s
+        <div class="food" v-for="(item, index) in recordList" :key="index">{{
+          item.value.food }}
         </div>
       </div>
     </div>
 
-    <P style="margin-top: 2px; color: #c4c4c4;">--------------------😋🍲🥩🥬🥔🍄🦞🐠--------------------</P>
+    <P style="margin-top: 2px; color: #c4c4c4;">-----😋🍲🥩🥬🥔🍄🦞🐠-----</P>
     <div class="title">计时表</div>
     <div class="from">
       <label for="food">食材:</label>
@@ -361,17 +368,18 @@ const submitFood = (item) => {
 .from label {
   color: rgb(129, 34, 40);
   font-weight: 600;
+  font-size: 14px;
 }
 
 .from input {
-  width: 110px;
-  margin: 0 10px;
+  width: 100px;
   padding: 0 5px;
   color: #af6f73;
 }
 
 .from input::placeholder {
   color: #af6f73;
+  font-size: 12px;
 }
 
 .from button {
