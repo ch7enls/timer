@@ -172,13 +172,6 @@ const closeModal = () => {
 
 // 提交自定义食材
 const submitFood = (item) => {
-  if (waitList.length >= 0) {
-    isShowTips.value = false
-    console.log('true', isShowTips.value, waitList.length);
-  } else {
-    isShowTips.value = true
-    console.log('false', isShowTips.value, waitList.length);
-  }
   if (makeFood.value && makeTime.value) {
     // event.preventDefault();
     const nowTime = getNowTime()
@@ -191,11 +184,21 @@ const submitFood = (item) => {
     countdown(newItem);
     makeFood.value = '';
     makeTime.value = '';
+    if (waitList.length >= 0) {
+      isShowTips.value = false
+      console.log('false', isShowTips.value, waitList.length);
+    } else {
+      isShowTips.value = true
+      console.log('true', isShowTips.value, waitList.length);
+    }
   } else {
     // alert('请输入食材名称和时间')
     showModal();
     console.log('请输入食材名称和时间');
+    return
   }
+
+
 }
 
 // 数据持久化
@@ -261,13 +264,13 @@ const submitFood = (item) => {
       </div>
     </div>
 
-    <P style="margin-top: 2px; color: #c4c4c4;">-----😋🍲🥩🥬🥔🍄🦞🐠-----</P>
+    <P style="margin-top: 2px; color: #c4c4c4;">-----😋🍲🍖🥩🥬🥕🥔🍄🦐🐟-----</P>
     <div class="title">计时表</div>
     <div class="from">
       <label for="food">食材:</label>
       <input type="text" placeholder="请输入食材名称" v-model="makeFood" name="makeFood" id="">
       <label for="time">时间:</label>
-      <input type="text" placeholder="请输入烹饪时间" v-model="makeTime" name="makeTime" id="">
+      <input type="text" placeholder="请输入烹饪时间/s" v-model="makeTime" name="makeTime" id="">
       <button type="submit" @click="submitFood(item)">开涮</button>
     </div>
     <!-- 模态框 -->
@@ -372,7 +375,7 @@ const submitFood = (item) => {
 }
 
 .from input {
-  width: 100px;
+  width: 105px;
   padding: 0 5px;
   color: #af6f73;
 }
