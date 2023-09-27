@@ -2,14 +2,14 @@
 import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 
 // 食物列表
-const foodList = ref
 const makeFood = ref('');
 const makeTime = ref('');
 const isShowText = ref(true)
 const isShowTips = ref(true)
 const scrollY = ref(0)
 const isModalVisible = ref(false);
-
+const isModalVisible2 = ref(false);
+const modalText = ref('')
 // const timeOut = ref(true)
 const meatListData = ([
   { food: "牛肉片", time: "60" },
@@ -162,12 +162,27 @@ const recordWaitList = (item) => {
   countdown(newItem);
 }
 
-const showModal = () => {
+const showModal = (text) => {
+  modalText.value = text;
   isModalVisible.value = true;
 };
 
+
 const closeModal = () => {
   isModalVisible.value = false;
+};
+
+
+const confirm = () => {
+  // 处理确定按钮点击事件
+  console.log('确定按钮被点击');
+  closeModal();
+};
+
+const cancel = () => {
+  // 处理取消按钮点击事件
+  console.log('取消按钮被点击');
+  closeModal();
 };
 
 // 提交自定义食材
@@ -193,13 +208,22 @@ const submitFood = (item) => {
     }
   } else {
     // alert('请输入食材名称和时间')
-    showModal();
+    const text = '🙀请输入食材名称和烹饪时间'
+    showModal(text);
     console.log('请输入食材名称和时间');
     return
   }
-
-
 }
+
+// 清空等待列表
+const clearWaitList = (item) => {
+  const all = waitList.length
+  waitList.splice(0, all)
+  // recordList.splice(0, all)
+  isShowTips.value = true;
+}
+
+// 反馈
 
 // 数据持久化
 
@@ -277,7 +301,9 @@ const submitFood = (item) => {
     <div class="modal" v-if="isModalVisible">
       <div class="modal-content">
         <span class="close" @click="closeModal">&times;</span>
-        <p>🙀请输入食材名称和烹饪时间</p>
+        <p>{{ modalText }}</p>
+        <button @click="confirm">确定</button>
+        <button @click="cancel">取消</button>
       </div>
     </div>
 
@@ -292,6 +318,11 @@ const submitFood = (item) => {
       </div>
     </div>
 
+    <!-- 功能区 -->
+    <div class="area">
+      <!-- <button class="empty" @click="showModal2(text2)">清空</button> -->
+      <!-- <button class="empty">反馈</button> -->
+    </div>
   </div>
 </template>
 
@@ -402,7 +433,7 @@ const submitFood = (item) => {
   align-content: flex-start;
   flex-wrap: wrap;
   width: 90%;
-  min-height: 300px;
+  min-height: 250px;
   /* 设置最小高度 */
   background-color: #ffffff;
   color: #af6f73;
@@ -468,6 +499,17 @@ const submitFood = (item) => {
   color: #af6f73;
 }
 
+.modal-content button {
+  width: 54px;
+  height: 24px;
+  background-color: #fef0f0;
+  color: rgb(129, 34, 40);
+  border: #af6f73 1px solid;
+  border-radius: 4px;
+  margin: 30px 10px 0 10px;
+  box-sizing: border-box;
+}
+
 /* 关闭按钮 */
 .close {
   position: absolute;
@@ -482,5 +524,27 @@ const submitFood = (item) => {
 .close:hover {
   color: black;
   cursor: pointer;
+}
+
+.area {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100vw;
+}
+
+.empty {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: rgb(189, 35, 35);
+  border: 0;
+  padding: 6px;
+  margin: 5px 10px;
+  color: #ffffff;
+  font-size: 14px;
 }
 </style>
